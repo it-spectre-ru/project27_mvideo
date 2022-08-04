@@ -109,7 +109,7 @@ def get_data():
 
   products_ids = response.get('body').get('products')
 
-  with open('l_products_ids,json', 'w') as file:
+  with open('1_products_ids,json', 'w') as file:
     json.dump(products_ids, file, indent=4, ensure_ascii=False)
 
   # print(products_ids)
@@ -172,7 +172,7 @@ def get_data():
       'item_bonus': item_bonus
     }
 
-  with open('4_item_prices.json', 'w') as file:
+  with open('4_items_prices.json', 'w') as file:
     json.dump(items_prices, file, indent=4, ensure_ascii=False)
 
 
@@ -181,7 +181,7 @@ def get_result():
   with open('2_items.json') as file:
     products_data = json.load(file)
 
-  with open('4_item_prices.json') as file:
+  with open('4_items_prices.json') as file:
     products_prices = json.load(file)
 
   products_data = products_data.get('body').get('products')
