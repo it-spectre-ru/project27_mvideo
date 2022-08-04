@@ -1,4 +1,5 @@
 import requests
+import json
 
 
 # curlconverter.com
@@ -104,7 +105,15 @@ def get_data():
   }
 
   response = requests.get('https://www.mvideo.ru/bff/products/listing', params=params, cookies=cookies, headers=headers).json()
-  print(response)
+  # print(response)
+
+  products_ids = response.get('body').get('products')
+
+  with open('l_products_ids,json', 'w') as file:
+    json.dump(products_ids, file, indent=4, ensure_ascii=False)
+
+  print(products_ids)
+
 
 def main():
   get_data()
