@@ -11,8 +11,7 @@ def get_data():
       'offset': '0',
       'limit': '24',
       'filterParams': [
-          'WyJza2lka2EiLCIiLCJkYSJd',
-          'WyJ0b2xrby12LW5hbGljaGlpIiwiLTEyIiwiZGEiXQ==',
+          'WyLQotC+0LvRjNC60L4g0LIg0L3QsNC70LjRh9C40LgiLCItOSIsItCU0LAiXQ==',
       ],
       'doTranslit': 'true',
   }
@@ -35,96 +34,109 @@ def get_data():
 
   print(f'[Info] Total positions: {total_items} | Total pages: {pages_count}')
 
-  # products_ids = response.get('body').get('products')
 
-  # with open('1_products_ids,json', 'w') as file:
-  #   json.dump(products_ids, file, indent=4, ensure_ascii=False)
+  products_ids = {}
+  products_description = {}
+  products_prices = {}
 
-  # # print(products_ids)
+  for i in range(pages_count):
+    offset = f'{i * 24}'
 
-  # json_data = {
-  #   'productIds': products_ids,
-  #   'mediaTypes': [
-  #     'images',
-  #   ],
-  #   'category': True,
-  #   'status': True,
-  #   'brand': True,
-  #   'propertyTypes': [
-  #     'KEY',
-  #   ],
-  #   'propertiesConfig': {
-  #     'propertiesPortionSize': 5,
-  #   },
-  #   'multioffer': False,
-  # }
+    params = {
+      'categoryId': '195',
+      'offset': offset,
+      'limit': '24',
+      'filterParams': [
+        'WyLQotC+0LvRjNC60L4g0LIg0L3QsNC70LjRh9C40LgiLCItOSIsItCU0LAiXQ==',
+      ],
+      'doTranslit': 'true',
+    }
 
-  # response = requests.post('https://www.mvideo.ru/bff/product-details/list', cookies=cookies, headers=headers, json=json_data).json()
+    response = s.get('https://www.mvideo.ru/bff/products/listing', params=params, cookies=cookies, headers=headers).json()
 
-  # with open('2_items.json', 'w') as file:
-  #   json.dump(response, file, indent=4, ensure_ascii=False)
+    products_ids_list = response.get('body').get('products')
+    products_ids[i] = products_ids_list
 
 
-  # products = response.get('body').get('products')
-  # # print(len(products))
+    json_data = {
+      'productIds': products_ids_list,
+      'mediaTypes': [
+      'images',
+    ],
+      'category': True,
+      'status': True,
+      'brand': True,
+      'propertyTypes': [
+      'KEY',
+    ],
+      'propertiesConfig': {
+      'propertiesPortionSize': 5,
+    },
+      'multioffer': False,
+    }
+    
+    response = s.post('https://www.mvideo.ru/bff/product-details/list', cookies=cookies, headers=headers, json=json_data).json()
+    products_description[i] = response
 
+    products_ids_str = ','.join(products_ids_list)
 
-  # products_ids_str = ','.join(products_ids)
+    params = {
+      'productIds': products_ids_str,
+      'addBonusRubles': 'true',
+      'isPromoApplied': 'true',
+    }
+    
+    response = s.get('https://www.mvideo.ru/bff/products/prices', params=params, cookies=cookies, headers=headers).json()
+    
+    material_prices = response.get('body').get('materialPrices')
 
-  # params = {
-  #   'productIds': products_ids_str,
-  #   'addBonusRubles': 'true',
-  #   'isPromoApplied': 'true',
-  # }
-  
-  # response = requests.get('https://www.mvideo.ru/bff/products/prices', params=params, cookies=cookies, headers=headers).json()
+    for item in material_prices:
+      item_id = item.get('price').get('productId')
+      item_base_price = item.get('price').get('basePrice')
+      item_sale_price = item.get('price').get('salePrice')
+      item_bonus = item.get('bonusRubles').get('total')
 
-  # with open('3_prices.json', 'w') as file:
-  #   json.dump(response, file, indent=4, ensure_ascii=False)
+      products_prices[item_id] = {
+        'item_basePrice': item_base_price,
+        'item_salePrice': item_sale_price,
+        'item_bonus': item_bonus
+      }
 
-  # items_prices = {
+    print(f'[+] Finished {i + 1} of the {pages_count} pages')
 
-  # }
+  with open('data/1_product_ids.json', 'w') as file:
+    json.dump(products_ids, file, indent=4, ensure_ascii=False)
 
-  # material_prices = response.get('body').get('materialPrices')
+  with open('data/2_product_description.json', 'w') as file:
+    json.dump(products_description, file, indent=4, ensure_ascii=False)
 
-  # for item in material_prices:
-  #   item_id = item.get('price').get('productId')
-  #   item_base_price = item.get('price').get('basePrice')
-  #   item_sale_price = item.get('price').get('salePrice')
-  #   item_bonus = item.get('bonusRubles').get('total')
-
-  #   items_prices[item_id] = {
-  #     'item_basePrice': item_base_price,
-  #     'item_salePrice': item_sale_price,
-  #     'item_bonus': item_bonus
-  #   }
-
-  # with open('4_items_prices.json', 'w') as file:
-  #   json.dump(items_prices, file, indent=4, ensure_ascii=False)
+  with open('data/3_product_prices.json', 'w') as file:
+    json.dump(products_prices, file, indent=4, ensure_ascii=False)
 
 
 
 def get_result():
-  with open('2_items.json') as file:
+  with open('data/2_product_description.json') as file:
     products_data = json.load(file)
 
-  with open('4_items_prices.json') as file:
+  with open('data/3_product_prices.json') as file:
     products_prices = json.load(file)
 
-  products_data = products_data.get('body').get('products')
+  for item in products_data.values():
+    products = item.get('body').get('products')
 
-  for item in products_data:
-    product_id = item.get('productId')
+    for item in products:
+      product_id = item.get('productId')
 
-    if product_id in products_prices:
-      prices = products_prices[product_id]
+      if product_id in products_prices:
+        prices = products_prices[product_id]
 
-    item['item_basePrice'] = prices.get('item_basePrice')
-    item['item_salePrice'] = prices.get('item_salePrice')
-    item['item_bonus'] = prices.get('item_bonus')
+      item['item_basePrice'] = prices.get('item_basePrice')
+      item['item_salePrice'] = prices.get('item_salePrice')
+      item['item_bonus'] = prices.get('item_bonus')
+      item['item_link'] = f'https://www.mvideo.ru/products/{item.get("nameTranslit")}-{product_id}'
 
-  with open('5_result.json', 'w') as file:
+  with open('data/4_result.json', 'w') as file:
     json.dump(products_data, file, indent=4, ensure_ascii=False)
 
 
@@ -134,7 +146,7 @@ def get_result():
 
 def main():
   get_data()
-  # get_result()
+  get_result()
 
 
 if __name__ == '__main__':
